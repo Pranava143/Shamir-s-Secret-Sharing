@@ -2,9 +2,12 @@ function parseBigInt(stringValue, base) {
   const bigIntBase = BigInt(base);
   let result = 0n;
   const digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+
   for (const char of stringValue.toLowerCase()) {
     const digitValue = digits.indexOf(char);
-    if (digitValue === -1) throw new Error("Invalid character");
+    if (digitValue < 0 || digitValue >= base) {
+      throw new Error(`Invalid character '${char}' for base ${base}`);
+    }
     result = result * bigIntBase + BigInt(digitValue);
   }
   return result;
@@ -12,7 +15,12 @@ function parseBigInt(stringValue, base) {
 
 function decodeRoots(json) {
   const { k } = json.keys;
-  const indices = Object.keys(json).filter(key => !isNaN(Number(key))).map(Number).sort((a, b) => a - b).slice(0, k);
+  const indices = Object.keys(json)
+    .filter(key => !isNaN(Number(key)))
+    .map(Number)
+    .sort((a, b) => a - b)
+    .slice(0, k);
+
   return indices.map(idx => {
     const { base, value } = json[String(idx)];
     const x = BigInt(idx);
@@ -21,13 +29,16 @@ function decodeRoots(json) {
   });
 }
 
+
 function lagrangeC(points) {
   const k = points.length;
   let c = 0n;
+
   for (let j = 0; j < k; j++) {
     const [xj, yj] = points[j];
     let num = 1n;
     let den = 1n;
+
     for (let i = 0; i < k; i++) {
       if (i !== j) {
         const [xi] = points[i];
@@ -35,11 +46,15 @@ function lagrangeC(points) {
         den *= (xj - xi);
       }
     }
+
+    if (den === 0n) {
+      throw new Error("Division by zero in Lagrange interpolation");
+    }
+
     c += (yj * num) / den;
   }
   return c;
 }
-
 
 const json1 = {
   "keys": { "n": 4, "k": 3 },
@@ -64,7 +79,9 @@ const json2 = {
 };
 
 const points1 = decodeRoots(json1);
-console.log(lagrangeC(points1).toString());
+const secret1 = lagrangeC(points1);
+console.log(`The secret for json1 is: ${secret1.toString()}`);
 
 const points2 = decodeRoots(json2);
-console.log(lagrangeC(points2).toString());
+const secret2 = lagrangeC(points2);
+console.log(`The secret for json2 is: ${secret2.toString()}`);
