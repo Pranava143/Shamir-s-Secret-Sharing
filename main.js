@@ -40,7 +40,6 @@ function lagrangeC(points) {
   return c;
 }
 
-// --- USAGE ---
 
 const json1 = {
   "keys": { "n": 4, "k": 3 },
